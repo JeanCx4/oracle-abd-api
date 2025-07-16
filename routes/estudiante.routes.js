@@ -10,7 +10,9 @@ router.delete('/:dni', ctrl.eliminarEstudiante);
 
 // ✅ Rutas específicas deben ir ANTES de las rutas con parámetros dinámicos
 router.get('/qr/:dni', ctrl.generarQR);
+router.get('/qr-asistencia/:dni', ctrl.generarQRAsistencia);
 router.get('/admin/regenerar-qr/todos', ctrl.regenerarTodosLosQR);
+router.get('/validar-qr/:dni', ctrl.validarDniQR);
 
 // Esta debe ir al final para evitar conflictos
 router.get('/:dni', ctrl.obtenerPorDni);

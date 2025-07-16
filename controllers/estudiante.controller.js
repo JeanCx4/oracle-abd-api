@@ -193,6 +193,94 @@ const obtenerAsistencias = async (req, res) => {
   }
 };
 
+// 📱 Validar DNI desde QR
+const validarDniQR = async (req, res) => {
+  try {
+    const { dni } = req.params;
+
+    if (!dni) {
+      return res.status(400).json({ error: 'DNI es requerido' });
+    }
+
+    const estudiante = await Estudiante.findByPk(dni, {
+      attributes: ['DNI', 'NOMBRES', 'APELLIDOS', 'EMAIL', 'FOTO'],
+      include: [
+        { model: Carrera, through: { attributes: [] } },
+        { model: Club, through: { attributes: [] } }
+      ]
+    });
+
+    if (!estudiante) {
+      return res.status(404).json({ error: 'Estudiante no encontrado' });
+    }
+
+    res.json({
+      valido: true,
+      estudiante: estudiante
+    });
+
+  } catch (err) {
+    console.error('💥 Error al validar DNI del QR:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 📱 Generar QR específico para asistencia
+const generarQRAsistencia = async (req, res) => {
+  try {
+    const { dni } = req.params;
+
+    const estudiante = await Estudiante.findByPk(dni);
+    if (!estudiante) {
+      return res.status(404).json({ error: 'Estudiante no encontrado' });
+    }
+
+    // Generar QR con información específica para asistencia
+    const qrData = {
+      tipo: 'asistencia',
+      dni: estudiante.DNI,
+      timestamp: Date.now()
+    };
+
+    const qrTexto = JSON.stringify(qrData);
+    
+    try {
+      const qrBuffer = await QRCode.toBuffer(qrTexto, {
+        errorCorrectionLevel: 'M',
+        type: 'png',
+        quality: 0.92,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+
+      const qrBase64 = qrBuffer.toString('base64');
+
+      res.json({
+        estudiante: {
+          DNI: estudiante.DNI,
+          NOMBRES: estudiante.NOMBRES,
+          APELLIDOS: estudiante.APELLIDOS
+        },
+        qr: {
+          data: qrTexto,
+          image: `data:image/png;base64,${qrBase64}`
+        }
+      });
+
+    } catch (qrErr) {
+      console.error('Error generando QR:', qrErr);
+      res.status(500).json({ error: 'Error al generar código QR' });
+    }
+
+  } catch (err) {
+    console.error('💥 Error en generarQRAsistencia:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // ✅ Exportar todas las funciones
 module.exports = {
   crearEstudiante,
@@ -202,5 +290,7 @@ module.exports = {
   obtenerPorDni,
   generarQR,
   regenerarTodosLosQR,
-  obtenerAsistencias
+  obtenerAsistencias,
+  validarDniQR,
+  generarQRAsistencia
 };
