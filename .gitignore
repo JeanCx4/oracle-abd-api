@@ -110,6 +110,10 @@ Thumbs.db
 # Uploaded files (si quieres excluir archivos subidos)
 uploads/*
 !uploads/.gitkeep
+!uploads/index.js
+!uploads/fotos/
+uploads/fotos/*
+!uploads/fotos/.gitkeep
 
 # Build directories
 build/
